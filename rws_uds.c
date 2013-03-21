@@ -11,6 +11,8 @@ static int rwscoli_uds_fd = -1;
 
 static struct sockaddr_un rwscoli_sh_sa_un;
 
+/*======================sshd part===================*/
+
 int rwscoli_uds_publish(char *path)
 {
    struct sockaddr_un sa_un;
@@ -55,7 +57,7 @@ int rwscoli_uds_publish(char *path)
    return fd;
 }
 
-int rwscoli_uds_recv_cmd(int fd, char *buf, int *size)
+int rwscoli_uds_recv_cmd(char *buf, int *size)
 {
    struct msghdr msg;
    struct iovec iov;
@@ -71,14 +73,15 @@ int rwscoli_uds_recv_cmd(int fd, char *buf, int *size)
    msg.msg_control = NULL;
    msg.msg_controllen = 0; 
    
-   result = recvmsg(fd, &msg, 0);
+   result = recvmsg(rwscoli_uds_fd, &msg, 0);
 
    if (result == -1) {
       perror("rwscoli_uds_recv_cmd");
       return -1;
    }
 
-   return 0;
+   *size = result;
+   return result;
 }
 
 int rwscoli_uds_send_cmd_rsp(char *buf, int size)
@@ -96,9 +99,8 @@ int rwscoli_uds_send_cmd_rsp(char *buf, int size)
    msg.msg_iovlen = 1;
    msg.msg_control = NULL;
    msg.msg_controllen = 0; 
-   
-   result = sendmsg(rwscoli_uds_fd, &msg, 0);
 
+   result = sendmsg(rwscoli_uds_fd, &msg, 0);
    if (result == -1) {
       perror("rwscoli_uds_send_cmd_rsp");
       return -1;
@@ -106,6 +108,8 @@ int rwscoli_uds_send_cmd_rsp(char *buf, int size)
 
    return result;
 }
+
+/*=========================ssh part=================*/
 
 int rwscoli_uds_init()
 {
@@ -128,10 +132,11 @@ int rwscoli_uds_init()
       return -1;
    }
 
+   rwscoli_uds_fd = fd;
    return fd;
 }
 
-int rwscoli_uds_send_cmd(int fd, char *path, char *buf, int size)
+int rwscoli_uds_send_cmd(char *path, char *buf, int size)
 {
    struct msghdr msg;
    struct iovec vec; 
@@ -157,7 +162,7 @@ int rwscoli_uds_send_cmd(int fd, char *path, char *buf, int size)
    msg.msg_controllen = 0;
    msg.msg_flags = 0;
    
-   result = sendmsg(fd, &msg, 0);
+   result = sendmsg(rwscoli_uds_fd, &msg, 0);
    if (result < 0) {
       perror("rwscoli_uds_send_cmd");
    }
@@ -165,7 +170,7 @@ int rwscoli_uds_send_cmd(int fd, char *path, char *buf, int size)
    return result;
 }
 
-int rwscoli_uds_recv_cmd_rsp(int fd, char *buf, int *size)
+int rwscoli_uds_recv_cmd_rsp(char *buf, int *size)
 {
    struct msghdr msg;
    struct iovec iov;
@@ -181,14 +186,14 @@ int rwscoli_uds_recv_cmd_rsp(int fd, char *buf, int *size)
    msg.msg_control = NULL;
    msg.msg_controllen = 0; 
    
-   result = recvmsg(fd, &msg, 0);
-
-   if (result == -1) {
+   result = recvmsg(rwscoli_uds_fd, &msg, 0);
+   if (result < -1) {
       perror("rwscoli_uds_recv_cmd_rsp");
       return -1;
    }
 
-   return 0;
+   *size = result;
+   return result;
 
 }
 

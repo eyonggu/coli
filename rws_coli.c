@@ -14,11 +14,14 @@
 #include <stdarg.h>
 #include <arpa/inet.h>
 
+#include "rws_uds.h"
 #include "rws_coli.h"
 
 #define RWSCOLI_MAX_CMD_ITEMS            64
 #define RWSCOLI_MAX_PRINT_STR_LEN        512
 #define RWSCOLI_PARAM_ITEM_TAG_LEN       8
+#define RWSCOLI_MAX_LINE_LENGTH          4096
+#define RWSCOLI_CMD_ENDMARK              0xDEADBEEF
 
 union rwscoli_param_value {
    int integer;
@@ -46,38 +49,18 @@ struct rwscoli_cmd {
 
 static uint32_t rwscoli_next_free_cmd_node = 0;
 static struct rwscoli_cmd free_cmd_nodes[RWSCOLI_MAX_CMD_ITEMS]; 
-static struct rwscoli_cmd rwscoli_cmd_tree_root = {0,};
+static struct rwscoli_cmd rwscoli_cmd_tree_root;
 
 static void rwscoli_print_syntax(struct rwscoli_cmd *cmd)
 {
    if (cmd->is_command)
-      printf("%s\n", cmd->syntax);
+      rwscoli_printf("%s\n", cmd->syntax);
 
    cmd = cmd->children;
    while (cmd) {
       rwscoli_print_syntax(cmd);
       cmd = cmd->next;
    }
-}
-
-static struct rwscoli_cmd *rwscoli_create_cmd(char *name, struct rwscoli_cmd *parent)
-{
-   struct rwscoli_cmd *cmd;
-
-   if (rwscoli_next_free_cmd_node == RWSCOLI_MAX_CMD_ITEMS)
-   {
-      return NULL;
-   }
-
-   cmd = &free_cmd_nodes[rwscoli_next_free_cmd_node++];
-   cmd->name = name;
-   cmd->children = NULL;
-   cmd->next = parent->children;
-   parent->children = cmd;
-
-   cmd->is_command = 0;
-
-   return cmd;
 }
 
 static void rwscoli_free_params(struct rwscoli_param *params)
@@ -210,7 +193,7 @@ static struct rwscoli_param *rwscoli_parse_params(int argc, char* argv[], struct
 
          if (!strcmp(argv[i], cmd->params[j].tag)) {
             if (i + 1 == argc && cmd->params[j].type != RWSCOLI_FLAG) {
-               printf("unexpected number of parameters\n");
+               rwscoli_printf("unexpected number of parameters\n");
                rwscoli_free_params(head);
                rwscoli_print_syntax(cmd);
                return NULL;
@@ -237,7 +220,7 @@ static struct rwscoli_param *rwscoli_parse_params(int argc, char* argv[], struct
                   break;
                case RWSCOLI_ADDRESS:
                   if (rwscoli_str2sockaddr(argv[i + 1], &param->value.addr) < 0) {
-                     printf("unsupported address format (%s)\n", argv[i + 1]);
+                     rwscoli_printf("unsupported address format (%s)\n", argv[i + 1]);
                      f = 3; /* error */						
                   }
                   break;
@@ -248,7 +231,7 @@ static struct rwscoli_param *rwscoli_parse_params(int argc, char* argv[], struct
                   param->value.long_integer = strtoull(argv[i + 1], (char**)NULL, 10);
                   break;
                default:
-                  printf("unexpected parameter type (%u)\n", cmd->params[j].type);
+                  rwscoli_printf("unexpected parameter type (%u)\n", cmd->params[j].type);
                   break;
             }
 
@@ -260,7 +243,7 @@ static struct rwscoli_param *rwscoli_parse_params(int argc, char* argv[], struct
 
       switch (f) {
          case 0: /* tag is not found */
-            printf("unexpected parameter tag (%s)\n", argv[i]);
+            rwscoli_printf("unexpected parameter tag (%s)\n", argv[i]);
             /* fall */
          case 3: /* error */			
             rwscoli_free_params(head);
@@ -289,56 +272,6 @@ static struct rwscoli_param *rwscoli_parse_params(int argc, char* argv[], struct
    }
 
    return head;
-}
-
-static struct rwscoli_cmd *rwscoli_find_cmd(struct rwscoli_cmd *list, char *name)
-{
-   while (list) {
-      if (!strcmp(list->name, name))
-         break;
-      list = list->next;
-   }
-
-   return list;
-}
-
-static void rwscoli_end_cmd()
-{
-   /* TODO: send a endmark ? */
-}
-
-static void rwscoli_exec_cmd(int argc, char* argv[])
-{
-   int cl = 0;
-   struct rwscoli_cmd *cmd = &rwscoli_cmd_tree_root;
-   struct rwscoli_cmd *tmp;
-   struct rwscoli_param *params;
-
-   for (cl = 0; cl < RWSCOLI_MAX_LEVELS; cl++) {
-      if (argc == cl)
-         break;
-
-      tmp = rwscoli_find_cmd(cmd->children, argv[cl]);
-      if (!tmp)
-         break;
-      cmd = tmp;
-   }
-
-   if (cmd->is_command) {
-      params = rwscoli_parse_params(argc - cl, &argv[cl], cmd);
-      if (!params)
-         return;
-
-      cmd->cmd_cb(params);
-
-      rwscoli_end_cmd();
-      rwscoli_free_params(params);
-   } else {
-      printf("Supported commands:\n");
-      rwscoli_print_syntax(cmd);
-   }
-
-   return;
 }
 
 int rwscoli_get_flag(struct rwscoli_param *params, char *tag)
@@ -394,22 +327,71 @@ unsigned long long rwscoli_get_llu(struct rwscoli_param *params, char *tag, unsi
    return param->value.long_integer;
 } 
 
-void rwscoli_print(char *fmt, ...)
+static void rwscoli_print_(char* buf, int size)
 {
-   int size;
+   rwscoli_uds_send_cmd_rsp(buf, size);
+   return;
+}
+
+void rwscoli_printb(char *buf, int size)
+{
+   rwscoli_print_(buf, size);
+   return;
+}
+
+void rwscoli_printf(char *fmt, ...)
+{
    va_list ap;
    char buf[RWSCOLI_MAX_PRINT_STR_LEN];
+   int  size;
 
    va_start(ap, fmt);
    size = vsnprintf(buf, RWSCOLI_MAX_PRINT_STR_LEN, fmt, ap);
    va_end(ap);	
 
-   rwscoli_uds_send_cmd_rsp(buf, size);
+   rwscoli_print_(buf, size);
+   return;
 }
 
-void rwscoli_print_buf(char *buf)
+static struct rwscoli_cmd *rwscoli_create_cmd(char *name, struct rwscoli_cmd *parent)
 {
+   struct rwscoli_cmd *cmd;
+
+   if (rwscoli_next_free_cmd_node == RWSCOLI_MAX_CMD_ITEMS)
+   {
+      return NULL;
+   }
+
+   cmd = &free_cmd_nodes[rwscoli_next_free_cmd_node++];
+   cmd->name = name;
+   cmd->children = NULL;
+   cmd->next = parent->children;
+   parent->children = cmd;
+
+   cmd->is_command = 0;
+
+   return cmd;
 }
+
+
+static struct rwscoli_cmd *rwscoli_find_cmd(struct rwscoli_cmd *list, char *name)
+{
+   while (list) {
+      if (!strcmp(list->name, name))
+         break;
+      list = list->next;
+   }
+
+   return list;
+}
+
+static void rwscoli_end_cmd()
+{
+   /* TODO: send a endmark ? */
+   uint32_t endmark = RWSCOLI_CMD_ENDMARK;
+   rwscoli_printb((char*)&endmark, sizeof(endmark));
+}
+
 
 void rwscoli_init(char *cmd_name)
 {
@@ -476,15 +458,101 @@ int rwscoli_publish(char *name)
    return rwscoli_uds_publish(name);
 }
 
-void rwscoli_cmd_handler(char *buf, int size)
+int rwscoli_recv_cmd(int *argc, char ***argv)
 {
-   int    argc = 0;
-   char **argv = NULL;
-   if (rwscoli_unpack_args(buf, size, &argc, &argv) == 0) {
-      rwscoli_exec_cmd(argc, argv);
+   static char buf[RWSCOLI_MAX_LINE_LENGTH];
+   int size = sizeof(buf);
+   int result;
+
+   memset(buf, 0, sizeof(buf));
+
+   result = rwscoli_uds_recv_cmd(buf, &size);
+   if (result < 0) {
+      fprintf(stderr, "rwscoli_recv_cmd failed!\n");
+      return -1;
    }
-   free(argv);
+
+   if (rwscoli_unpack_args(buf, size, argc, argv) < 0) {
+      fprintf(stderr, "rwscoli_unpack_args failed!\n");
+      return -1;
+   }
+
+   return 0;
+}
+
+int rwscoli_send_cmd(int argc, char **argv)
+{
+   int result;
+   char buf[RWSCOLI_MAX_LINE_LENGTH];
+   int len = rwscoli_args_len(argc, argv);
+
+   memset(buf, 0, sizeof(buf));
+   rwscoli_pack_args(argc, argv, buf, &len);
+
+   result = rwscoli_uds_send_cmd("/tmp/dpsd", buf, len);
+   if (result < 0) {
+      fprintf(stderr, "rwscoli_send_cmd() failed!\n");
+      return -1;
+   }
+
+   return 0;
+}
+
+void rwscoli_wait_cmd_end()
+{
+   char buf[RWSCOLI_MAX_LINE_LENGTH];
+   int  result = 0;
+   do {
+      memset(buf, 0, sizeof(buf));
+      int len = sizeof(buf) - 1;
+      result = rwscoli_uds_recv_cmd_rsp(buf, &len);
+      if (result < 0 || *(uint32_t*)buf == RWSCOLI_CMD_ENDMARK) {
+         break;
+      }
+
+      buf[len] = '\0';
+      fprintf(stderr, "%s", buf);
+      fflush(stderr);
+   } while (1);
 
    return;
 }
+
+void rwscoli_exec_cmd(int argc, char* argv[])
+{
+   int cl = 0;
+   struct rwscoli_cmd *cmd = &rwscoli_cmd_tree_root;
+   struct rwscoli_cmd *tmp;
+   struct rwscoli_param *params;
+
+   for (cl = 0; cl < RWSCOLI_MAX_LEVELS; cl++) {
+      if (argc == cl)
+         break;
+
+      tmp = rwscoli_find_cmd(cmd->children, argv[cl]);
+      if (!tmp)
+         break;
+      cmd = tmp;
+   }
+
+   if (cmd->is_command) {
+      params = rwscoli_parse_params(argc - cl, &argv[cl], cmd);
+      if (!params) {
+         goto exec_cmd_end;
+      }
+
+      cmd->cmd_cb(params);
+
+      rwscoli_free_params(params);
+   } else {
+      rwscoli_printf("Supported commands:\n");
+      rwscoli_print_syntax(cmd);
+   }
+
+exec_cmd_end:
+   rwscoli_end_cmd();
+   free(argv);
+   return;
+}
+
 

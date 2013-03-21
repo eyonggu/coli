@@ -45,10 +45,11 @@ extern void rwscoli_init(char *cmd_name);
 extern int  rwscoli_publish(char *name);
 
 extern void rwscoli_register_cmd(struct rwscoli_command *command);
-extern void rwscoli_cmd_handler(char *buf, int size);
+extern int  rwscoli_recv_cmd(int *argc, char ***argv);
+extern void rwscoli_exec_cmd(int argc, char* argv[]);
 
-extern void rwscoli_print(char *, ...);
-extern void rwscoli_print_buf(char *);
+extern void rwscoli_printf(char *fmt, ...);
+extern void rwscoli_printb(char *buf, int size);
 
 struct sockaddr;
 extern int rwscoli_get_flag(struct rwscoli_param *params, char *tag);
