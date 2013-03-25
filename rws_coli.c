@@ -6,6 +6,11 @@
  * @date 2013-02-15
  */
 
+/* TODO list:
+ * 1) support local commands
+ * 2) support multiple commands in one program
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -393,10 +398,9 @@ static void rwscoli_end_cmd()
 }
 
 
-void rwscoli_init(char *cmd_name)
+void rwscoli_init()
 {
-   /* TODO: support multiple commands in one application */
-   rwscoli_create_cmd(cmd_name, &rwscoli_cmd_tree_root);
+   /* TODO: anything to do? */
 }
 
 void rwscoli_uninit()
@@ -454,6 +458,9 @@ void rwscoli_register_cmd(struct rwscoli_command *command)
 
 int rwscoli_publish(char *name)
 {
+   /* TODO: support multiple commands in one application */
+   rwscoli_create_cmd(name, &rwscoli_cmd_tree_root);
+
    /* TODO: support other IPC? */
    return rwscoli_uds_publish(name);
 }
@@ -486,12 +493,13 @@ int rwscoli_send_cmd(int argc, char **argv)
    char buf[RWSCOLI_MAX_LINE_LENGTH];
    int len = rwscoli_args_len(argc, argv);
 
+   /* TODO: dispatch to correct receiver */
+
    memset(buf, 0, sizeof(buf));
    rwscoli_pack_args(argc, argv, buf, &len);
 
-   result = rwscoli_uds_send_cmd("/tmp/dpsd", buf, len);
+   result = rwscoli_uds_send_cmd(argv[0], buf, len);
    if (result < 0) {
-      fprintf(stderr, "rwscoli_send_cmd() failed!\n");
       return -1;
    }
 
@@ -545,7 +553,7 @@ void rwscoli_exec_cmd(int argc, char* argv[])
 
       rwscoli_free_params(params);
    } else {
-      rwscoli_printf("Supported commands:\n");
+      rwscoli_printf("Usage: \n");
       rwscoli_print_syntax(cmd);
    }
 

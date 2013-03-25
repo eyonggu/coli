@@ -57,11 +57,11 @@ int main()
    char **argv = NULL;
    int    result;
 
-   rwscoli_init("dps");
+   rwscoli_init();
 
    setup_colis();
 
-   rwscoli_publish("/tmp/dpsd");
+   rwscoli_publish("dps");
 
    while (1) {
       result = rwscoli_recv_cmd(&argc, &argv);
