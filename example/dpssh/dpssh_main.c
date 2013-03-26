@@ -87,7 +87,7 @@ int main(int argc, char **argv)
    rwscoli_uds_init();
 
    while (1) {
-      line = readline("$: ");
+      line = readline("$:");
 
       if (!line) {
          break;
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
       s = stripwhite(line);
 
-      if (s) {
+      if (s && (strlen(s) > 0)) {
          char *expansion;
          int result;
 
@@ -105,6 +105,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "%s\n", expansion);
          } else {
             add_history(expansion);
+
             /* TODO: check if it is local or remote command */
             if (tok_str(tok, line, &local_argc, (const char ***)&local_argv) == 0) {
                result = rwscoli_send_cmd(local_argc, local_argv);
