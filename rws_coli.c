@@ -368,7 +368,7 @@ static struct rwscoli_cmd *rwscoli_create_cmd(char *name, struct rwscoli_cmd *pa
    }
 
    cmd = &free_cmd_nodes[rwscoli_next_free_cmd_node++];
-   cmd->name = name;
+   cmd->name = strdup(name);
    cmd->children = NULL;
    cmd->next = parent->children;
    parent->children = cmd;
@@ -431,7 +431,7 @@ void rwscoli_register_cmd(struct rwscoli_command *command)
 
    if (collision) {
       if (cmd && !cmd->is_command) {
-         cmd->syntax = command->syntax;
+         cmd->syntax = strdup(command->syntax);
          cmd->cmd_cb = command->cmd_cb;
          memcpy(cmd->params, command->params, sizeof(command->params));
          cmd->is_command = 1;

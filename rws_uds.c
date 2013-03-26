@@ -136,8 +136,9 @@ static struct rwscoli_uds_cmd rwscoli_uds_cmds[RWSCOLI_UDPS_CMD_MAX];
 
 void rwscoli_uds_print_cmd_list()
 {
+   int i;
    printf("%-16s%s\n", "Command", "Description");
-   for (int i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
+   for (i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
       if (rwscoli_uds_cmds[i].name != NULL) {
          printf("%-16s%s\n", rwscoli_uds_cmds[i].name, rwscoli_uds_cmds[i].descr);
       }
@@ -148,15 +149,18 @@ void rwscoli_uds_print_cmd_list()
 
 static int rwscoli_uds_init_cmd_list()
 {
+   int i;
    struct dirent *file;
+
    DIR *dir = opendir(RWSCOLI_UDS_PATH);
    if (dir == NULL) {
       fprintf(stderr, "error opendir %s!\n", RWSCOLI_UDS_PATH);
       return -1;
    }
+
    while((file=readdir(dir)) != NULL) {
       if (file->d_type == DT_SOCK) {
-         for (int i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
+         for (i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
             if (rwscoli_uds_cmds[i].name == NULL) {
                rwscoli_uds_cmds[i].name = strdup(file->d_name);
                char path[64];
@@ -200,7 +204,8 @@ int rwscoli_uds_init()
 
 static char *rwscoli_uds_find_cmd_path(char *cmd)
 {
-   for (int i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
+   int i;
+   for (i = 0; i < RWSCOLI_UDPS_CMD_MAX; i++) {
       if (rwscoli_uds_cmds[i].name && 
            strcmp(cmd, rwscoli_uds_cmds[i].name) == 0 ) {
          return rwscoli_uds_cmds[i].path;

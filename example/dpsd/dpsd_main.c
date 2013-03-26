@@ -4,13 +4,13 @@
 
 #include "rws_coli.h"
 
-void cc_hello_world(struct rwscoli_param *params)
+void hello_world_cc(struct rwscoli_param *params)
 {	
    (void)params;
    rwscoli_printf("hello world\n");
 }
 
-void cc_hej_varld(struct rwscoli_param *params)
+void hej_varld_cc(struct rwscoli_param *params)
 {
    char *name;
 
@@ -26,28 +26,28 @@ void cc_hej_varld(struct rwscoli_param *params)
 void setup_colis(void)
 {
         /* coli command without any parameter */
-	struct rwscoli_command hello_world_cc = { 
+	struct rwscoli_command cc_hello_world = { 
 		"dps hello world",
 		{"dps", "hello", "world", 0, 0},
 		{
                    {0, 0}
 		},
-		cc_hello_world
+		hello_world_cc
 	};
 
         /* coli command with one parameter of type string */
-	struct rwscoli_command hej_varld_cc = {
+	struct rwscoli_command cc_hej_varld = {
 		"dps hej varld -i <name>",
 		{"dps", "hej", "varld", 0, 0},
 		{
                    {"-i", RWSCOLI_STRING},
                    {0, 0}
 		},
-		cc_hej_varld
+		hej_varld_cc
 	};
 	
-	rwscoli_register_cmd(&hej_varld_cc);
-	rwscoli_register_cmd(&hello_world_cc);
+	rwscoli_register_cmd(&cc_hej_varld);
+	rwscoli_register_cmd(&cc_hello_world);
 }
 
 
