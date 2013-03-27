@@ -1,3 +1,17 @@
+/**
+ * @file rws_uds.c
+ * @brief This file implements the IPC between rwscolish and rwscolid
+ *        with unix domain socket.
+ * @author Yong Gu (yong.g.gu@ericsson.com)
+ * @version 1.0
+ * @date 2013-02-15
+ */
+
+
+/*TODO List:
+ * 1) heartbeat between rwscolish and multiple rwscolid
+ */
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,10 +25,6 @@
 
 static int rwscoli_uds_fd = -1;
 static struct sockaddr_un rwscoli_sh_sa_un;
-
-/*TODO List:
- * 1) heartbeat to rwscolid to get cmd/syntax
- */
 
 /*======================rwscolid part===================*/
 

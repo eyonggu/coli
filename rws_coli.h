@@ -41,8 +41,8 @@ struct rwscoli_command {
 
 /*********** EXPORTS ***********/
 
-extern void rwscoli_init();
-extern int  rwscoli_publish(char *name);
+extern void rwscoli_init(char *name, char *desc);
+extern int  rwscoli_publish();
 
 extern void rwscoli_register_cmd(struct rwscoli_command *command);
 extern int  rwscoli_recv_cmd(int *argc, char ***argv);

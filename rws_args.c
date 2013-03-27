@@ -1,3 +1,12 @@
+/**
+ * @file rws_args.c
+ * @brief Helper functions for passing command 
+ *        from rwscolish to rwscolid
+ * @author Yong Gu (yong.g.gu@ericsson.com)
+ * @version 1.0
+ * @date 2013-02-15
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>

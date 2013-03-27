@@ -1,6 +1,6 @@
 /**
  * @file rws_coli.c
- * @brief COLI command mechanism.
+ * @brief COLI framework
  * @author eyonggu
  * @version 1.0
  * @date 2013-02-15
@@ -9,6 +9,7 @@
 /* TODO list:
  * 1) support local commands
  * 2) support multiple commands in one program
+ * 3) Support other IPC mechanism.
  */
 
 #include <stdio.h>
@@ -55,6 +56,9 @@ struct rwscoli_cmd {
 static uint32_t rwscoli_next_free_cmd_node = 0;
 static struct rwscoli_cmd free_cmd_nodes[RWSCOLI_MAX_CMD_ITEMS]; 
 static struct rwscoli_cmd rwscoli_cmd_tree_root;
+
+static char *rwscoli_name;
+static char *rwscoli_desc;
 
 static void rwscoli_print_syntax(struct rwscoli_cmd *cmd)
 {
@@ -398,9 +402,12 @@ static void rwscoli_end_cmd()
 }
 
 
-void rwscoli_init()
+void rwscoli_init(char *name, char *desc)
 {
-   /* TODO: anything to do? */
+   /* TODO: support multiple commands in one application */
+   rwscoli_name = strdup(name);
+   rwscoli_desc = strdup(desc);
+   rwscoli_create_cmd(name, &rwscoli_cmd_tree_root);
 }
 
 void rwscoli_uninit()
@@ -456,13 +463,10 @@ void rwscoli_register_cmd(struct rwscoli_command *command)
    }
 }
 
-int rwscoli_publish(char *name)
+int rwscoli_publish()
 {
-   /* TODO: support multiple commands in one application */
-   rwscoli_create_cmd(name, &rwscoli_cmd_tree_root);
-
    /* TODO: support other IPC? */
-   return rwscoli_uds_publish(name);
+   return rwscoli_uds_publish(rwscoli_name);
 }
 
 int rwscoli_recv_cmd(int *argc, char ***argv)

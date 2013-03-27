@@ -1,3 +1,11 @@
+/**
+ * @file rws_uds.h
+ * @brief 
+ * @author Yong Gu (yong.g.gu@ericsson.com)
+ * @version 1.0
+ * @date 2013-03-27
+ */
+
 #ifndef RWS_UDS_H 
 #define RWS_UDS_H
 
