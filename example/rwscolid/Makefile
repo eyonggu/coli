@@ -1,6 +1,6 @@
 #This is an example of Makefile
 
-PROGRAM = dpsd
+PROGRAM = rwscolid
 ARCH    = i686
 OS      = linux
 

@@ -64,7 +64,7 @@ static char **fileman_completion(const char *text, int start, int end)
 
 void initialize_readline()
 {
-   rl_readline_name = "DPSSH";
+   rl_readline_name = "RWSCOLISH";
 
    rl_attempted_completion_function = fileman_completion;
 }

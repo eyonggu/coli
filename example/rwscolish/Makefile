@@ -1,7 +1,7 @@
 #This is an example of Makefile
 
-PROGRAM = dpssh
-ARCH    = powerpc
+PROGRAM = rwscolish
+ARCH    = i686
 OS      = linux
 
 #header directory

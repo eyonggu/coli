@@ -27,8 +27,8 @@ void setup_colis(void)
 {
         /* coli command without any parameter */
 	struct rwscoli_command cc_hello_world = { 
-		"dps hello world",
-		{"dps", "hello", "world", 0, 0},
+		"rws hello world",
+		{"rws", "hello", "world", 0, 0},
 		{
                    {0, 0}
 		},
@@ -37,8 +37,8 @@ void setup_colis(void)
 
         /* coli command with one parameter of type string */
 	struct rwscoli_command cc_hej_varld = {
-		"dps hej varld -i <name>",
-		{"dps", "hej", "varld", 0, 0},
+		"rws hej varld -i <name>",
+		{"rws", "hej", "varld", 0, 0},
 		{
                    {"-i", RWSCOLI_STRING},
                    {0, 0}
@@ -57,7 +57,7 @@ int main()
    char **argv = NULL;
    int    result;
 
-   rwscoli_init("dps", "");
+   rwscoli_init("rws", "");
 
    setup_colis();
 
