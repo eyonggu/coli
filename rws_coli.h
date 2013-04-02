@@ -39,10 +39,17 @@ struct rwscoli_command {
 	void (*cmd_cb) (struct rwscoli_param*);
 };
 
+enum {
+        RWSCOLI_LOCAL = 0,
+        RWSCOLI_UNIX,
+        RWSCOLI_INET, /* not implemented yet */
+        RWSCOLI_IPC_MAX
+};
+
 /*********** EXPORTS ***********/
 
 extern void rwscoli_init(char *name, char *desc);
-extern int  rwscoli_publish();
+extern int  rwscoli_publish(int ipcflag);
 
 extern void rwscoli_register_cmd(struct rwscoli_command *command);
 extern int  rwscoli_recv_cmd(int *argc, char ***argv);
@@ -52,15 +59,16 @@ extern void rwscoli_printf(char *fmt, ...);
 extern void rwscoli_printb(char *buf, int size);
 
 struct sockaddr;
-extern int rwscoli_get_flag(struct rwscoli_param *params, char *tag);
-extern int rwscoli_get_int(struct rwscoli_param *params, char *tag, int def);
-extern char *rwscoli_get_str(struct rwscoli_param *params, char *tag, char *def);
-extern struct sockaddr *rwscoli_get_addr(struct rwscoli_param *params, char *tag, struct sockaddr *def);
+extern int                rwscoli_get_flag(struct rwscoli_param *params, char *tag);
+extern int                rwscoli_get_int(struct rwscoli_param *params, char *tag, int def);
+extern char              *rwscoli_get_str(struct rwscoli_param *params, char *tag, char *def);
+extern struct sockaddr   *rwscoli_get_addr(struct rwscoli_param *params, char *tag, struct sockaddr *def);
 extern unsigned long long rwscoli_get_llu(struct rwscoli_param *params, char *tag, unsigned long long def);
 
 extern int rwscoli_args_len(int argc, char **argv);
 extern int rwscoli_pack_args(int argc, char **argv, char *buf, int *size);
 extern int rwscoli_unpack_args(char *buf, int size, int *argc, char ***argv);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -61,7 +61,7 @@ int main()
 
    setup_colis();
 
-   rwscoli_publish();
+   rwscoli_publish(RWSCOLI_UNIX);
 
    while (1) {
       result = rwscoli_recv_cmd(&argc, &argv);

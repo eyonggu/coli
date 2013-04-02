@@ -20,14 +20,13 @@
 #include <stdarg.h>
 #include <arpa/inet.h>
 
+#include "rws_local.h"
 #include "rws_uds.h"
 #include "rws_coli.h"
 
 #define RWSCOLI_MAX_CMD_ITEMS            64
 #define RWSCOLI_MAX_PRINT_STR_LEN        512
 #define RWSCOLI_PARAM_ITEM_TAG_LEN       8
-#define RWSCOLI_MAX_LINE_LENGTH          4096
-#define RWSCOLI_CMD_ENDMARK              0xDEADBEEF
 
 union rwscoli_param_value {
    int integer;
@@ -53,12 +52,34 @@ struct rwscoli_cmd {
    void (*cmd_cb) (struct rwscoli_param*);
 };
 
+struct rwscoli_ipc_cb {
+   int  (*publish)(char *name);
+   void (*print)(char* buf, int size);
+   void (*end)();
+};
+
 static uint32_t rwscoli_next_free_cmd_node = 0;
 static struct rwscoli_cmd free_cmd_nodes[RWSCOLI_MAX_CMD_ITEMS]; 
 static struct rwscoli_cmd rwscoli_cmd_tree_root;
 
-static char *rwscoli_name;
-static char *rwscoli_desc;
+static char *rwscoli_name = NULL;
+static char *rwscoli_desc = NULL;
+
+static int   rwscoli_ipcflag = RWSCOLI_LOCAL;
+static struct rwscoli_ipc_cb rwscoli_ipc_cb[RWSCOLI_IPC_MAX] = 
+   {
+      [RWSCOLI_LOCAL] = { 
+                          .publish      = rwscoli_local_publish,
+                          .print        = rwscoli_local_print,
+                          .end          = rwscoli_local_end_cmd
+                        },
+
+      [RWSCOLI_UNIX] =  { 
+                          .publish      = rwscoli_uds_publish,
+                          .print        = rwscoli_uds_print,
+                          .end          = rwscoli_uds_end_cmd
+                        },
+   };
 
 static void rwscoli_print_syntax(struct rwscoli_cmd *cmd)
 {
@@ -338,8 +359,7 @@ unsigned long long rwscoli_get_llu(struct rwscoli_param *params, char *tag, unsi
 
 static void rwscoli_print_(char* buf, int size)
 {
-   rwscoli_uds_send_cmd_rsp(buf, size);
-   return;
+   return rwscoli_ipc_cb[rwscoli_ipcflag].print(buf, size);
 }
 
 void rwscoli_printb(char *buf, int size)
@@ -396,9 +416,7 @@ static struct rwscoli_cmd *rwscoli_find_cmd(struct rwscoli_cmd *list, char *name
 
 static void rwscoli_end_cmd()
 {
-   /* TODO: send a endmark ? */
-   uint32_t endmark = RWSCOLI_CMD_ENDMARK;
-   rwscoli_printb((char*)&endmark, sizeof(endmark));
+   return rwscoli_ipc_cb[rwscoli_ipcflag].end();
 }
 
 
@@ -463,71 +481,15 @@ void rwscoli_register_cmd(struct rwscoli_command *command)
    }
 }
 
-int rwscoli_publish()
+int rwscoli_publish(int ipcflag)
 {
-   /* TODO: support other IPC? */
-   return rwscoli_uds_publish(rwscoli_name);
-}
-
-int rwscoli_recv_cmd(int *argc, char ***argv)
-{
-   static char buf[RWSCOLI_MAX_LINE_LENGTH];
-   int size = sizeof(buf);
-   int result;
-
-   memset(buf, 0, sizeof(buf));
-
-   result = rwscoli_uds_recv_cmd(buf, &size);
-   if (result < 0) {
-      fprintf(stderr, "rwscoli_recv_cmd failed!\n");
+   if (ipcflag < 0 || ipcflag >= RWSCOLI_IPC_MAX) {
       return -1;
    }
 
-   if (rwscoli_unpack_args(buf, size, argc, argv) < 0) {
-      fprintf(stderr, "rwscoli_unpack_args failed!\n");
-      return -1;
-   }
-
-   return 0;
-}
-
-int rwscoli_send_cmd(int argc, char **argv)
-{
-   int result;
-   char buf[RWSCOLI_MAX_LINE_LENGTH];
-   int len = rwscoli_args_len(argc, argv);
-
-   /* TODO: dispatch to correct receiver */
-
-   memset(buf, 0, sizeof(buf));
-   rwscoli_pack_args(argc, argv, buf, &len);
-
-   result = rwscoli_uds_send_cmd(argv[0], buf, len);
-   if (result < 0) {
-      return -1;
-   }
-
-   return 0;
-}
-
-void rwscoli_wait_cmd_end()
-{
-   char buf[RWSCOLI_MAX_LINE_LENGTH];
-   int  result = 0;
-   do {
-      memset(buf, 0, sizeof(buf));
-      int len = sizeof(buf) - 1;
-      result = rwscoli_uds_recv_cmd_rsp(buf, &len);
-      if (result < 0 || *(uint32_t*)buf == RWSCOLI_CMD_ENDMARK) {
-         break;
-      }
-
-      buf[len] = '\0';
-      fprintf(stderr, "%s", buf);
-      fflush(stderr);
-   } while (1);
-
-   return;
+   rwscoli_ipcflag = ipcflag;
+   
+   return rwscoli_ipc_cb[rwscoli_ipcflag].publish(rwscoli_name);
 }
 
 void rwscoli_exec_cmd(int argc, char* argv[])

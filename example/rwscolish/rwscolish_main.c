@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
    stifle_history(7);
 
-   rwscoli_uds_init();
+   rwscoli_uds_sh_init();
 
    while (1) {
       line = readline("$:");
@@ -108,9 +108,9 @@ int main(int argc, char **argv)
 
             /* TODO: check if it is local or remote command */
             if (tok_str(tok, line, &local_argc, (const char ***)&local_argv) == 0) {
-               result = rwscoli_send_cmd(local_argc, local_argv);
+               result = rwscoli_uds_sh_send_cmd(local_argc, local_argv);
                if (result >= 0) {
-                  rwscoli_wait_cmd_end();
+                  rwscoli_uds_sh_wait_cmd_end();
                }
             }
          }
