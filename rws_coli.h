@@ -1,12 +1,12 @@
 /**
  * @file rws_coli.h
- * @brief 
+ * @brief
  * @author eyonggu
- * @version 1.0
- * @date 2013-02-15
+ * @version 2.0
+ * @date 2013-05-15
  */
 
-#ifndef RWS_COLI_H 
+#ifndef RWS_COLI_H
 #define RWS_COLI_H
 
 #ifdef __cplusplus
@@ -48,26 +48,20 @@ enum {
 
 /*********** EXPORTS ***********/
 
-extern void rwscoli_init(char *name, char *desc);
-extern int  rwscoli_publish(int ipcflag);
+void rwscoli_init(int ipcflag);
 
-extern void rwscoli_register_cmd(struct rwscoli_command *command);
-extern int  rwscoli_recv_cmd(int *argc, char ***argv);
-extern void rwscoli_exec_cmd(int argc, char* argv[]);
+void rwscoli_register_cmd(struct rwscoli_command *command);
+void rwscoli_exec_cmd(int argc, char* argv[]);
 
-extern void rwscoli_printf(char *fmt, ...);
-extern void rwscoli_printb(char *buf, int size);
+void rwscoli_printf(char *fmt, ...);
+void rwscoli_printb(char *buf, int size);
 
 struct sockaddr;
-extern int                rwscoli_get_flag(struct rwscoli_param *params, char *tag);
-extern int                rwscoli_get_int(struct rwscoli_param *params, char *tag, int def);
-extern char              *rwscoli_get_str(struct rwscoli_param *params, char *tag, char *def);
-extern struct sockaddr   *rwscoli_get_addr(struct rwscoli_param *params, char *tag, struct sockaddr *def);
-extern unsigned long long rwscoli_get_llu(struct rwscoli_param *params, char *tag, unsigned long long def);
-
-extern int rwscoli_args_len(int argc, char **argv);
-extern int rwscoli_pack_args(int argc, char **argv, char *buf, int *size);
-extern int rwscoli_unpack_args(char *buf, int size, int *argc, char ***argv);
+int                rwscoli_get_flag(struct rwscoli_param *params, char *tag);
+int                rwscoli_get_int(struct rwscoli_param *params, char *tag, int def);
+char              *rwscoli_get_str(struct rwscoli_param *params, char *tag, char *def);
+struct sockaddr   *rwscoli_get_addr(struct rwscoli_param *params, char *tag, struct sockaddr *def);
+unsigned long long rwscoli_get_llu(struct rwscoli_param *params, char *tag, unsigned long long def);
 
 #ifdef __cplusplus
 } /* extern "C" */

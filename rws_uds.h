@@ -1,18 +1,34 @@
 /**
  * @file rws_uds.h
- * @brief 
+ * @brief
  * @author Yong Gu (yong.g.gu@ericsson.com)
- * @version 1.0
- * @date 2013-03-27
+ * @version 2.0
+ * @date 2013-05-17
  */
 
-#ifndef RWS_UDS_H 
+#ifndef RWS_UDS_H
 #define RWS_UDS_H
 
-extern int rwscoli_uds_publish(char *name);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern void rwscoli_uds_print(char *buf, int size);
+#define RWSCOLI_UDS_PATH         "/tmp/rwscoli/"
 
-extern void rwscoli_uds_end_cmd();
+void rwscoli_uds_print(char *buf, int size);
+
+void rwscoli_uds_cmd_end();
+
+int rwscoli_publish(char *name);
+
+int rwscoli_recv_cmd(int fd, int *argc, char ***argv);
+
+int rwscoli_send_cmd(int fd, int argc, char **argv, char *to);
+
+void rwscoli_wait_cmd_end(int fd, int timeout, void (*cb)(char *buf, int len));
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* RWS_UDS_H */

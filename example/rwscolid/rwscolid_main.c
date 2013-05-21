@@ -5,7 +5,7 @@
 #include "rws_coli.h"
 
 void hello_world_cc(struct rwscoli_param *params)
-{	
+{
    (void)params;
    rwscoli_printf("hello world\n");
 }
@@ -26,9 +26,9 @@ void hej_varld_cc(struct rwscoli_param *params)
 void setup_colis(void)
 {
         /* coli command without any parameter */
-	struct rwscoli_command cc_hello_world = { 
-		"rws hello world",
-		{"rws", "hello", "world", 0, 0},
+	struct rwscoli_command cc_hello_world = {
+		"hello world",
+		{"hello", "world", 0, 0, 0},
 		{
                    {0, 0}
 		},
@@ -37,15 +37,15 @@ void setup_colis(void)
 
         /* coli command with one parameter of type string */
 	struct rwscoli_command cc_hej_varld = {
-		"rws hej varld -i <name>",
-		{"rws", "hej", "varld", 0, 0},
+		"hej varld -i <name>",
+		{"hej", "varld", 0, 0, 0},
 		{
                    {"-i", RWSCOLI_STRING},
                    {0, 0}
 		},
 		hej_varld_cc
 	};
-	
+
 	rwscoli_register_cmd(&cc_hej_varld);
 	rwscoli_register_cmd(&cc_hello_world);
 }
@@ -56,15 +56,19 @@ int main()
    int    argc = 0;
    char **argv = NULL;
    int    result;
+   int    fd;
 
-   rwscoli_init("rws", "");
+   rwscoli_init(RWSCOLI_UNIX);
 
    setup_colis();
 
-   rwscoli_publish(RWSCOLI_UNIX);
+   fd = rwscoli_publish("rws");
+   if (fd < 0) {
+      fprintf(stderr, "rwscoli_publish failed!\n");
+   }
 
    while (1) {
-      result = rwscoli_recv_cmd(&argc, &argv);
+      result = rwscoli_recv_cmd(fd, &argc, &argv);
       if (result < 0) {
          break;
       }

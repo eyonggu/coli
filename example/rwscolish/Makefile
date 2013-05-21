@@ -25,6 +25,8 @@ endif
 
 LDLIBS += edit
 
+CFLAGS += -ggdb
+
 ifeq ($(ARCH), powerpc)
 include /home/eyonggu/github/commk/dusg2.mk
 endif

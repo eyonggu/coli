@@ -1,3 +1,11 @@
+/**
+ * @file rwscolish_main.c
+ * @brief
+ * @author  Yong Gu (yong.g.gu@ericsson.com)
+ * @version 2.0
+ * @date 2013-05-21
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +17,22 @@
 #include <histedit.h>
 
 #include "rws_coli.h"
+#include "rws_uds.h"
+#include "rwscolish_cmd.h"
+
+#define RWSCOLISH_DEFAULT_PROMPT "[rws] -> "
+
+extern struct rwscolish_cmd rwscolish_cmds[];
+
+static char *dupstr(char *s)
+{
+   char *r;
+
+   if ( (r = malloc(strlen(s) + 1)) != NULL )
+      strcpy(r, s);
+
+   return (r);
+}
 
 static char *stripwhite (char *string)
 {
@@ -31,20 +55,18 @@ static char *stripwhite (char *string)
 static char *command_generator(const char *text, int state)
 {
    static int list_index, len;
-   /* char *name; */
+   char *name;
 
    if (!state) {
       list_index = 0;
       len = strlen (text);
    }
 
-   /* TODO: 
-   while (name = commands[list_index].name) {
+   while (name = rwscolish_cmds[list_index].name) {
       list_index++;
       if (strncmp (name, text, len) == 0)
          return (dupstr(name));
    }
-   */
 
    return ((char *)NULL);
 }
@@ -73,8 +95,6 @@ int main(int argc, char **argv)
 {
    char *line, *s;
    Tokenizer *tok;
-   int   local_argc;
-   char  **local_argv;
 
    (void)argc;
    (void)argv;
@@ -84,10 +104,14 @@ int main(int argc, char **argv)
 
    stifle_history(7);
 
-   rwscoli_uds_sh_init();
+   int fd = rwscolish_init();
+   if (fd < 0) {
+      fprintf(stderr, "rwscolish init failed!");
+      exit(1);
+   }
 
    while (1) {
-      line = readline("$:");
+      line = readline(RWSCOLISH_DEFAULT_PROMPT);
 
       if (!line) {
          break;
@@ -106,14 +130,28 @@ int main(int argc, char **argv)
          } else {
             add_history(expansion);
 
-            /* TODO: check if it is local or remote command */
+            int   local_argc;
+            char  **local_argv;
             if (tok_str(tok, line, &local_argc, (const char ***)&local_argv) == 0) {
-               result = rwscoli_uds_sh_send_cmd(local_argc, local_argv);
-               if (result >= 0) {
-                  rwscoli_uds_sh_wait_cmd_end();
-               }
-            }
-         }
+               struct rwscolish_cmd *cmd = rwscolish_find_cmd(local_argv[0]);
+
+               if (cmd == NULL) {
+                  /* unknown command, list known commands */
+                  rwscolish_print_cmds();
+               } else {
+                  if (cmd->path != NULL) {
+                     /* remote command */
+                     result = rwscoli_send_cmd(fd, local_argc, local_argv, cmd->path);
+                     if (result >= 0) {
+                        rwscoli_wait_cmd_end(fd, 1, rwscolish_print_cmd_rsp);
+                     }
+                  } else {
+                     /* local command */
+                     rwscoli_exec_cmd(local_argc, local_argv);
+                  }
+               } /* else if cmd... */
+            } /* if (tok_str... */
+         } /* else if (result... */
 
          free(expansion);
       }

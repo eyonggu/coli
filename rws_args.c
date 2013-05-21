@@ -1,9 +1,9 @@
 /**
  * @file rws_args.c
- * @brief Helper functions for passing command 
+ * @brief Helper functions for passing command
  *        from rwscolish to rwscolid
  * @author Yong Gu (yong.g.gu@ericsson.com)
- * @version 1.0
+ * @version 2.0
  * @date 2013-02-15
  */
 
@@ -13,22 +13,26 @@
 #include <malloc.h>
 #include <stdarg.h>
 
+#include "rws_coli.h"
+
+static char *rwscoli_argv[RWSCOLI_MAX_PARAMS];
+
 int rwscoli_args_len(int argc, char **argv)
 {
    int   i;
    int   len;
-   
+
    /*
    **  Add size of c string end marks and a trailing endmark
    */
    len = argc + 1;
-   
+
    /*
    **  Add size of c strings
    */
    for (i = 0; i < argc; i++)
       len += strlen(argv[i]);
-   
+
    return len;
 }
 
@@ -37,14 +41,14 @@ int rwscoli_pack_args(int argc, char **argv, char *buf, int *size)
    int   i;
    char  *ptr;
    int   len;
-   
+
    len = rwscoli_args_len(argc, argv);
 
    *size = len <= *size ? len : 0;
 
    if ( *size == 0 )
       return -1;
-   
+
    ptr = buf;
 
    for (i = 0; i < argc; i++) {
@@ -52,9 +56,9 @@ int rwscoli_pack_args(int argc, char **argv, char *buf, int *size)
       ptr = &ptr[strlen(ptr)];
       *ptr++ = '\0';
    }
-   
+
    *ptr++ = '\0';
-  
+
    return 0;
 }
 
@@ -76,9 +80,9 @@ int rwscoli_unpack_args(char *buf, int size, int *argc, char ***argv)
    }
 
    *argc = num;
-   *argv = malloc(*argc * sizeof(char *));
+   *argv = rwscoli_argv;
 
-   ptr   = buf;
+   ptr = buf;
    for (i = 0; i < *argc; i++) {
       (*argv)[i] = ptr;
       ptr = &ptr[strlen(ptr) + 1];
