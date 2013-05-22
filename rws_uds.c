@@ -29,7 +29,8 @@
 #define RWSCOLI_UDS_CMD_ENDMARK  0xDEADBEEF
 #define RWSCOLI_UDS_MAX_LINE_LEN 4096
 
-static int rwscoli_uds_fd;
+extern struct rwscoli rwscoli;
+
 static struct sockaddr_un rwscolish_uds_addr;
 
 static int rwscoli_uds_create_socket(char *path);
@@ -49,12 +50,12 @@ int rwscoli_publish(char *name)
 
    fd = rwscoli_uds_create_socket(path);
 
-   rwscoli_uds_fd = fd;
+   rwscoli.uds_fd = fd;
 
    return fd;
 }
 
-int rwscoli_recv_cmd(int fd, int *argc, char ***argv)
+int rwscoli_recv_cmd(int *argc, char ***argv)
 {
    static char buf[RWSCOLI_UDS_MAX_LINE_LEN];
    int size = sizeof(buf);
@@ -62,7 +63,7 @@ int rwscoli_recv_cmd(int fd, int *argc, char ***argv)
 
    memset(buf, 0, sizeof(buf));
 
-   result = rwscoli_uds_recv(fd, buf, &size, &rwscolish_uds_addr);
+   result = rwscoli_uds_recv(rwscoli.uds_fd, buf, &size, &rwscolish_uds_addr);
    if (result < 0) {
       fprintf(stderr, "rwscoli_recv_cmd failed!\n");
       return -1;
@@ -115,7 +116,9 @@ void rwscoli_wait_cmd_end(int fd, int timeout, void (*cb)(char *buf, int len))
 
 void rwscoli_uds_print(char *buf, int size)
 {
-   rwscoli_uds_send(rwscoli_uds_fd, buf, size, &rwscolish_uds_addr);
+   if (rwscoli.uds_fd != -1) {
+      rwscoli_uds_send(rwscoli.uds_fd, buf, size, &rwscolish_uds_addr);
+   }
    return;
 }
 

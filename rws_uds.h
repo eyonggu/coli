@@ -21,7 +21,7 @@ void rwscoli_uds_cmd_end();
 
 int rwscoli_publish(char *name);
 
-int rwscoli_recv_cmd(int fd, int *argc, char ***argv);
+int rwscoli_recv_cmd(int *argc, char ***argv);
 
 int rwscoli_send_cmd(int fd, int argc, char **argv, char *to);
 

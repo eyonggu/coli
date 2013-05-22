@@ -1,7 +1,7 @@
 /**
  * @file rws_coli.h
  * @brief
- * @author eyonggu
+ * @author Yong Gu (yong.g.gu@ericsson.com)
  * @version 2.0
  * @date 2013-05-15
  */
@@ -30,6 +30,13 @@ enum {
 	RWSCOLI_LONGINTEGER
 };
 
+enum {
+        RWSCOLI_LOCAL = 0,
+        RWSCOLI_UNIX,
+        RWSCOLI_INET, /* not implemented yet */
+        RWSCOLI_IPC_MAX
+};
+
 struct rwscoli_param;
 
 struct rwscoli_command {
@@ -37,13 +44,6 @@ struct rwscoli_command {
 	char *path[RWSCOLI_MAX_LEVELS];
 	struct {char *tag; int type;} params[RWSCOLI_MAX_PARAMS];
 	void (*cmd_cb) (struct rwscoli_param*);
-};
-
-enum {
-        RWSCOLI_LOCAL = 0,
-        RWSCOLI_UNIX,
-        RWSCOLI_INET, /* not implemented yet */
-        RWSCOLI_IPC_MAX
 };
 
 /*********** EXPORTS ***********/

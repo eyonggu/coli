@@ -1,7 +1,7 @@
 /**
  * @file rws_coli.c
  * @brief RWSCOLI core framework
- * @author eyonggu
+ * @author Yong Gu (yong.g.gu@ericsson.com)
  * @version 2.0
  * @date 2013-05-15
  */
@@ -45,18 +45,16 @@ struct rwscoli_cmd {
    void (*cmd_cb) (struct rwscoli_param*);
 };
 
-static struct rwscoli {
+struct rwscoli {
    struct rwscoli_cmd cmd_tree_root;
    int    next_free_cmd_node;
    struct rwscoli_cmd free_cmd_nodes[RWSCOLI_MAX_CMD_ITEMS];
-   char  *name;
-   char  *desc;
+   int    uds_fd;
    void (*print)(char* buf, int size);
    void (*cmd_end)();
 }rwscoli = {
    .next_free_cmd_node = 0,
-   .name               = NULL,
-   .desc               = NULL,
+   .uds_fd             = -1,
    .print              = NULL,
    .cmd_end            = NULL,
 };

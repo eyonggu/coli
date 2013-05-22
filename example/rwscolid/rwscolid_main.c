@@ -68,7 +68,7 @@ int main()
    }
 
    while (1) {
-      result = rwscoli_recv_cmd(fd, &argc, &argv);
+      result = rwscoli_recv_cmd(&argc, &argv);
       if (result < 0) {
          break;
       }

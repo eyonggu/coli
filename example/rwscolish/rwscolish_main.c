@@ -62,7 +62,7 @@ static char *command_generator(const char *text, int state)
       len = strlen (text);
    }
 
-   while (name = rwscolish_cmds[list_index].name) {
+   while ((name = rwscolish_cmds[list_index].name)) {
       list_index++;
       if (strncmp (name, text, len) == 0)
          return (dupstr(name));

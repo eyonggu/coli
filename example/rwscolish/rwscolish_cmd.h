@@ -18,8 +18,12 @@ struct rwscolish_cmd
 
 int rwscolish_init();
 
-struct rwscolish_cmd *rwscolish_find_cmd(char *cmd);
+void rwscolish_print_cmds();
 
 void rwscolish_print_cmd_rsp(char *buf, int len);
+
+struct rwscolish_cmd *rwscolish_find_cmd(char *cmd);
+
+void rwscolish_register_local_cmds();
 
 #endif /* RWSCOLISH_CMD_H */

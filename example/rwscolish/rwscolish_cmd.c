@@ -16,6 +16,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
 #include "rws_coli.h"
 #include "rws_uds.h"
 #include "rwscolish_cmd.h"
@@ -97,7 +98,7 @@ static int rwscolish_fetch_remote_cmds(char *path)
 {
    int result;
    char *cmd_hello[1];
-   cmd_hello[0] = "rwscolishhello";
+   cmd_hello[0] = "rwscolish_hello";
 
    result = rwscoli_send_cmd(rwscolish_uds_fd, 1, cmd_hello, path);
    if (result >= 0) {
