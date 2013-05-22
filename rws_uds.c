@@ -5,7 +5,7 @@
  *        interface.
  *
  * @author Yong Gu (yong.g.gu@ericsson.com)
- * @version 1.0
+ * @version 2.0
  * @date 2013-02-15
  */
 
@@ -34,21 +34,19 @@ extern struct rwscoli rwscoli;
 static struct sockaddr_un rwscolish_uds_addr;
 
 static int rwscoli_uds_create_socket(char *path);
-static int rwscoli_uds_close_socket(int fd);
 static int rwscoli_uds_recv(int fd, char *buf, int *size, struct sockaddr_un *from);
 static int rwscoli_uds_send(int fd, char *buf, int size, struct sockaddr_un *to);
 
 int rwscoli_publish(char *name)
 {
-   char path[64];
    int  fd;
 
    /* attemp to create the directory if non-exist */
    mkdir(RWSCOLI_UDS_PATH, S_IRWXU|S_IRWXG|S_IRWXO);
 
-   snprintf(path, sizeof(path), "%s%s", RWSCOLI_UDS_PATH, name);
+   snprintf(rwscoli.uds_path, sizeof(rwscoli.uds_path), "%s%s", RWSCOLI_UDS_PATH, name);
 
-   fd = rwscoli_uds_create_socket(path);
+   fd = rwscoli_uds_create_socket(rwscoli.uds_path);
 
    rwscoli.uds_fd = fd;
 
@@ -96,6 +94,7 @@ int rwscoli_send_cmd(int fd, int argc, char **argv, char *to)
 
 void rwscoli_wait_cmd_end(int fd, int timeout, void (*cb)(char *buf, int len))
 {
+   (void)timeout; /* TODO: */
    char buf[RWSCOLI_UDS_MAX_LINE_LEN];
    uint32_t endmark = RWSCOLI_UDS_CMD_ENDMARK;
    int  result = 0;
@@ -162,14 +161,6 @@ static int rwscoli_uds_create_socket(char *path)
 
    return fd;
 }
-
-static int rwscoli_uds_close_socket(int fd)
-{
-   close(fd);
-   //unlink(RWSCOLI_UDS_SH_PATH);
-   return 0;
-}
-
 
 static int rwscoli_uds_recv(int fd, char *buf, int *size, struct sockaddr_un *from)
 {

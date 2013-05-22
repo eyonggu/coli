@@ -12,47 +12,11 @@
 #include <ctype.h>
 #include <malloc.h>
 #include <stdarg.h>
-#include <arpa/inet.h>
 
 #include "rws_uds.h"
 #include "rws_coli.h"
 
-#define RWSCOLI_MAX_CMD_ITEMS            512
-#define RWSCOLI_MAX_PRINT_STR_LEN        4096
-#define RWSCOLI_PARAM_ITEM_TAG_LEN       16
-
-union rwscoli_param_value {
-   int integer;
-   char *string;
-   struct sockaddr_storage addr;
-   unsigned long long long_integer;
-};
-
-struct rwscoli_param {
-   struct rwscoli_param *next;
-   char tag[RWSCOLI_PARAM_ITEM_TAG_LEN];
-   int type;
-   union rwscoli_param_value value;
-};
-
-struct rwscoli_cmd {
-   char *name;
-   struct rwscoli_cmd  *next;
-   struct rwscoli_cmd  *children;
-   int is_command;
-   char *syntax;
-   struct {char *tag; int type;} params[RWSCOLI_MAX_PARAMS];
-   void (*cmd_cb) (struct rwscoli_param*);
-};
-
-struct rwscoli {
-   struct rwscoli_cmd cmd_tree_root;
-   int    next_free_cmd_node;
-   struct rwscoli_cmd free_cmd_nodes[RWSCOLI_MAX_CMD_ITEMS];
-   int    uds_fd;
-   void (*print)(char* buf, int size);
-   void (*cmd_end)();
-}rwscoli = {
+struct rwscoli rwscoli = {
    .next_free_cmd_node = 0,
    .uds_fd             = -1,
    .print              = NULL,

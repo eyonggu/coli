@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "rws_coli.h"
+#include "rws_uds.h"
 
 void hello_world_cc(struct rwscoli_param *params)
 {
