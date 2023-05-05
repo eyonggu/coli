@@ -1,33 +1,19 @@
-#This is an example of Makefile
+##Install following packages
+#sudo apt install libeditline-dev
+#sudo apt install libedit-dev
 
-PROGRAM = rwscolish
-ARCH    = i686
-OS      = linux
+CFLAGS = -I ../../
+LDFLAGS = -lreadline -ledit
 
-#header directory
-INCDIRS += 
-INCDIRS += ../../
-ifeq ($(ARCH), powerpc)
-INCDIRS += $(RCSIFDIR)/rcs-libedit/include
-else
-INCDIRS += /home/eyonggu/include
-endif
+all: rwscolish
 
-#source directory
-SRCDIRS += .
-SRCDIRS += ../../
+.PHONY: clean
 
-ifeq ($(ARCH), powerpc)
-LIBDIRS += $(RCSIFDIR)/rcs-libedit/lib/$(ARCH)
-else
-LIBDIRS += /home/eyonggu/lib
-endif
+OBJS = rwscolish_main.o rwscolish_cmd.o
+OBJS += ../../rws_args.o ../../rws_coli.c ../../rws_uds.c
 
-LDLIBS += edit
+rwscolish: $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-CFLAGS += -ggdb
-
-ifeq ($(ARCH), powerpc)
-include /home/eyonggu/github/commk/dusg2.mk
-endif
-include /home/eyonggu/github/commk/Common.mk
+clean:
+	rm -rf $(OBJS) rwscolish
