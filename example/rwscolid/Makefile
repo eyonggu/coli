@@ -1,15 +1,16 @@
 #This is an example of Makefile
 
-PROGRAM = rwscolid
-ARCH    = i686
-OS      = linux
+CFLAGS = -I ../../
 
-#header directory
-INCDIRS += .
-INCDIRS += ../../
+all: rwscolid
 
-#source directory
-SRCDIRS += .
-SRCDIRS += ../../
+.PHONY: clean
 
-include /home/eyonggu/github/commk/Common.mk
+OBJS = rwscolid_main.o
+OBJS += ../../rws_args.o ../../rws_coli.o ../../rws_uds.o
+
+rwscolid: $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+clean:
+	rm -rf $(OBJS) rwscolid

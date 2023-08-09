@@ -10,7 +10,7 @@ all: rwscolish
 .PHONY: clean
 
 OBJS = rwscolish_main.o rwscolish_cmd.o
-OBJS += ../../rws_args.o ../../rws_coli.c ../../rws_uds.c
+OBJS += ../../rws_args.o ../../rws_coli.o ../../rws_uds.o
 
 rwscolish: $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
